@@ -7,7 +7,12 @@ Implementation via Large Language Models
 
 ## Data
 `data/repos` 4 repos rawdata and extracted funcs
+
 `data/results` 4 repos mapping results
+
 `data/benchmark` benchmark info
 
+`data/rfc` rfc documents and extracted specifications
+
 ## Code
+`code/scripts` code of mapping
