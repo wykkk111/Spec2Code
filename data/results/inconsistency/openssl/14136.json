@@ -1,0 +1,49 @@
+{
+  "function_id": 14136,
+  "function_name": "tls_parse_stoc_use_srtp",
+  "file_path": "/data/a/ykw/RFC/final/data/openssl/source_code/ssl/statem/extensions_clnt.c",
+  "sr_content": "Peers which receive a message which is syntactically correct but semantically invalid (e.g., a DHE share of p -1, or an invalid enum) MUST terminate the connection with an \"illegal_parameter\" alert.",
+  "sr_context": {
+    "Previous Paragraph": "All the alerts listed in Section 6.2 MUST be sent with AlertLevel=fatal and MUST be treated as error alerts when received regardless of the AlertLevel in the message. Unknown Alert types MUST be treated as error alerts.",
+    "Current Paragraph": "Note: TLS defines two generic alerts (see Section 6) to use upon failure to parse a message. Peers which receive a message which cannot be parsed according to the syntax (e.g., have a length extending beyond the message boundary or contain an out-of-range length) MUST terminate the connection with a \"decode_error\" alert. Peers which receive a message which is syntactically correct but semantically invalid (e.g., a DHE share of p -1, or an invalid enum) MUST terminate the connection with an \"illegal_parameter\" alert."
+  },
+  "dsr1_result": {
+    "conformance": "PARTIAL",
+    "reasoning": "The code partially implements the specification. It correctly handles the case where the MKI is non-zero by sending an illegal_parameter alert. However, it incorrectly uses decode_error for other semantic errors like unsupported profiles, which should trigger illegal_parameter. Additionally, it doesn't handle all possible semantic errors, such as invalid enum values beyond MKI.",
+    "issues": [
+      {
+        "description": "Incorrect alert type for unsupported profiles",
+        "code_segment": "SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);",
+        "line_numbers": "Approximately line 25",
+        "expected_behavior": "Send SSL_AD_ILLEGAL_PARAMETER alert",
+        "actual_behavior": "Sends SSL_AD_DECODE_ERROR alert",
+        "severity": "HIGH"
+      },
+      {
+        "description": "Does not handle all semantic errors",
+        "code_segment": "No specific line, overall logic",
+        "line_numbers": "Entire function",
+        "expected_behavior": "Check for all semantic errors and send illegal_parameter",
+        "actual_behavior": "Only handles MKI and profile existence, misses others",
+        "severity": "MEDIUM"
+      }
+    ],
+    "conclusion": "The code partially meets the specification by handling some cases correctly but fails in others, particularly in alert type usage and completeness of error handling."
+  },
+  "openai_result": {
+    "conformance": "PARTIAL",
+    "reasoning": "Step 1: The provided implementation is part of the SRTP extension processing in TLS, and although the provided specification example (e.g. a DHE share of p-1, or an invalid enum) comes from a broader context, the basic requirement in the spec is that a semantically invalid message must lead to termination of the connection with an 'illegal_parameter' alert. This code is clearly written to validate an incoming SRTP extension message and to abort connections when errors are detected. Therefore it is intended to implement the general requirement of aborting on semantically invalid messages.\n\nStep 2: The code checks several aspects of the parsed message. It verifies the overall packet structure (using PACKET_get_net_2, PACKET_get_1, etc.) and then checks that the MKI value is zero. Notably, when mki != 0 the code does call SSLfatal with an SSL_AD_ILLEGAL_PARAMETER alert, which is in line with the spec requirement that semantically invalid parameters result in an 'illegal_parameter' alert.\n\nStep 3: However, when errors are detected in other parts of the parsing \u2013 for example, when the content type (ct) is not equal to 2, when the profile id is not found in the client\u2019s offered list, or when there are no SRTP profiles at all \u2013 the function terminates the connection by calling SSLfatal with an SSL_AD_DECODE_ERROR alert. According to the specification, a semantically invalid message should trigger an 'illegal_parameter' alert, not a 'decode_error' alert. This is a deviation from the requirement (except in the one case where mki is non\u2010zero, where the proper alert is used).\n\nStep 4: There are potential edge cases. For instance, if the server sends an otherwise syntactically well-formed message with a supported structure but an unsupported profile id, this is semantically invalid. The code handles it by terminating the connection, but it uses SSL_AD_DECODE_ERROR instead of the mandated SSL_AD_ILLEGAL_PARAMETER. Similarly, if a client inadvertently receives an extension that was not solicited (i.e. clnt==NULL), the connection is terminated with a decode error rather than an illegal_parameter alert.\n\nStep 5: In terms of state transitions, the code immediately terminates the connection upon encountering an error condition in the SRTP extension parsing. This behavior adheres to protocol requirements regarding error handling, but the inconsistency in alert type (using DECODE_ERROR in some cases rather than ILLEGAL_PARAMETER) means that the implementation does not fully meet the specification\u2019s phrasing regarding the type of alert to be sent in all semantically invalid cases.",
+    "issues": [
+      {
+        "description": "Mismatch in alert type for semantic errors: the specification requires that a semantically invalid message trigger an 'illegal_parameter' alert, yet several error conditions (e.g. unexpected content type, missing SRTP profiles, unsupported protection profile) invoke a 'decode_error' alert rather than 'illegal_parameter'.",
+        "code_segment": "if (!PACKET_get_net_2(pkt, &ct) || ct != 2 || ... PACKET_remaining(pkt) != 0) { SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST); return 0; } ... if (clnt == NULL) { SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_NO_SRTP_PROFILES); return 0; } ... SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST); return 0;",
+        "line_numbers": "Approximately lines 5-10, 18-21, and 33-36",
+        "expected_behavior": "For any syntactically correct but semantically invalid message per the specification, the implementation should terminate the connection with an 'illegal_parameter' alert.",
+        "actual_behavior": "The function terminates the connection using a 'decode_error' alert in several cases instead of using 'illegal_parameter', except when mki is non-zero.",
+        "severity": "MEDIUM"
+      }
+    ],
+    "conclusion": "The implementation is clearly aimed at enforcing a protocol requirement that mandates termination upon reception of a semantically invalid message. It does so in a number of cases by aborting the connection, and in one case (non-zero mki) it correctly uses an 'illegal_parameter' alert. However, for other semantic validation failures it uses 'decode_error' instead of 'illegal_parameter', constituting a partial deviation from the specification requirement. Therefore, the implementation only partially conforms to the specification."
+  },
+  "function_code": "int tls_parse_stoc_use_srtp(SSL_CONNECTION *s, PACKET *pkt,\n                            unsigned int context, X509 *x, size_t chainidx)\n{\n    unsigned int id, ct, mki;\n    int i;\n    STACK_OF(SRTP_PROTECTION_PROFILE) *clnt;\n    SRTP_PROTECTION_PROFILE *prof;\n\n    if (!PACKET_get_net_2(pkt, &ct) || ct != 2\n            || !PACKET_get_net_2(pkt, &id)\n            || !PACKET_get_1(pkt, &mki)\n            || PACKET_remaining(pkt) != 0) {\n        SSLfatal(s, SSL_AD_DECODE_ERROR,\n                 SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);\n        return 0;\n    }\n\n    if (mki != 0) {\n        /* Must be no MKI, since we never offer one */\n        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_SRTP_MKI_VALUE);\n        return 0;\n    }\n\n    /* Throw an error if the server gave us an unsolicited extension */\n    clnt = SSL_get_srtp_profiles(SSL_CONNECTION_GET_SSL(s));\n    if (clnt == NULL) {\n        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_NO_SRTP_PROFILES);\n        return 0;\n    }\n\n    /*\n     * Check to see if the server gave us something we support (and\n     * presumably offered)\n     */\n    for (i = 0; i < sk_SRTP_PROTECTION_PROFILE_num(clnt); i++) {\n        prof = sk_SRTP_PROTECTION_PROFILE_value(clnt, i);\n\n        if (prof->id == id) {\n            s->srtp_profile = prof;\n            return 1;\n        }\n    }\n\n    SSLfatal(s, SSL_AD_DECODE_ERROR,\n             SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);\n    return 0;\n}"
+}

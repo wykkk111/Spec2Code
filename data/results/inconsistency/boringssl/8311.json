@@ -1,0 +1,41 @@
+{
+  "function_id": 8311,
+  "function_name": "ssl_ext_pake_parse_serverhello",
+  "file_path": "/data/a/ykw/RFC/final/data/boringssl/source_code/ssl/extensions.cc",
+  "sr_content": "Peers which receive a message which is syntactically correct but semantically invalid (e.g., a DHE share of p -1, or an invalid enum) MUST terminate the connection with an \"illegal_parameter\" alert.",
+  "sr_context": {
+    "Previous Paragraph": "All the alerts listed in Section 6.2 MUST be sent with AlertLevel=fatal and MUST be treated as error alerts when received regardless of the AlertLevel in the message. Unknown Alert types MUST be treated as error alerts.",
+    "Current Paragraph": "Note: TLS defines two generic alerts (see Section 6) to use upon failure to parse a message. Peers which receive a message which cannot be parsed according to the syntax (e.g., have a length extending beyond the message boundary or contain an out-of-range length) MUST terminate the connection with a \"decode_error\" alert. Peers which receive a message which is syntactically correct but semantically invalid (e.g., a DHE share of p -1, or an invalid enum) MUST terminate the connection with an \"illegal_parameter\" alert."
+  },
+  "dsr1_result": {
+    "conformance": "PARTIAL",
+    "reasoning": "The code partially implements the specification by correctly handling some semantic errors with the 'illegal_parameter' alert but incorrectly uses 'decode_error' for others.",
+    "issues": [
+      {
+        "description": "Incorrect alert type for semantic error in named_pake check.",
+        "code_segment": "if (!CBS_get_u16(contents, &named_pake) || ... named_pake != SSL_PAKE_SPAKE2PLUSV1)",
+        "line_numbers": "Approximate lines 10-12",
+        "expected_behavior": "Set alert to SSL_AD_ILLEGAL_PARAMETER for semantic errors.",
+        "actual_behavior": "Sets alert to SSL_AD_DECODE_ERROR.",
+        "severity": "HIGH"
+      }
+    ],
+    "conclusion": "The code correctly handles some semantic errors but incorrectly uses decode_error for others, partially meeting the specification."
+  },
+  "openai_result": {
+    "conformance": "PARTIAL",
+    "reasoning": "This function is responsible for parsing the PAKE extension in the ServerHello and validating that its contents are semantically valid. The RFC specification requires that if a syntactically correct but semantically invalid message is received (for example an invalid enumeration value or a malformed PAKE share), then the peer MUST close the connection with an 'illegal_parameter' alert. In the implementation, several semantic validations are performed. For instance, the code checks that the PAKE message has the exact expected length (line ~14\u201318) and that the result of the PAKE confirmation computation succeeds (line ~26\u201334). When the length check fails or ComputeConfirmation returns false, the alert is explicitly set to SSL_AD_ILLEGAL_PARAMETER before terminating, which meets the spec requirement in those cases. However, there is one notable difference: when the enum (named_pake) does not equal SSL_PAKE_SPAKE2PLUSV1 (line ~9), the function returns an error after calling OPENSSL_PUT_ERROR without setting the out_alert to SSL_AD_ILLEGAL_PARAMETER. In that branch the alert remains SSL_AD_DECODE_ERROR (its default value), which does not strictly follow the spec requirement which calls for an 'illegal_parameter' alert upon semantically invalid content (an invalid enum is one example mentioned in the spec). This discrepancy makes the implementation only partially conformant to the requirement.",
+    "issues": [
+      {
+        "description": "Invalid enum value does not trigger an 'illegal_parameter' alert but a decode error instead.",
+        "code_segment": "if (!CBS_get_u16(contents, &named_pake) ||\n      !CBS_get_u16_length_prefixed(contents, &pake_msg) ||\n      CBS_len(contents) != 0 ||\n      named_pake != SSL_PAKE_SPAKE2PLUSV1) {\n    OPENSSL_PUT_ERROR(SSL, SSL_R_DECODE_ERROR);\n    return false;\n  }",
+        "line_numbers": "Approximately lines 8-12",
+        "expected_behavior": "When the enum value is semantically invalid (i.e. does not equal SSL_PAKE_SPAKE2PLUSV1), the connection should be terminated with an 'illegal_parameter' alert.",
+        "actual_behavior": "On invalid enum value, the error path returns false with the alert remaining as SSL_AD_DECODE_ERROR, not SSL_AD_ILLEGAL_PARAMETER.",
+        "severity": "MEDIUM"
+      }
+    ],
+    "conclusion": "The code is clearly intended to implement the RFC\u2019s requirement regarding semantically invalid messages. It correctly detects certain semantic invalidities (e.g. improper length and invalid PAKE share confirmation) and sets the 'illegal_parameter' alert in those cases. However, for semantically invalid enum values the code does not correctly set the alert to 'illegal_parameter' but rather leaves it as 'decode_error', resulting in only partial conformance with the specification."
+  },
+  "function_code": "bool ssl_ext_pake_parse_serverhello(SSL_HANDSHAKE *hs,\n                                    Array<uint8_t> *out_secret,\n                                    uint8_t *out_alert, CBS *contents) {\n  *out_alert = SSL_AD_DECODE_ERROR;\n\n  if (!hs->pake_prover) {\n    // If we did not offer a PAKE, the extension should have been rejected as\n    // unsolicited.\n    OPENSSL_PUT_ERROR(SSL, ERR_R_INTERNAL_ERROR);\n    *out_alert = SSL_AD_INTERNAL_ERROR;\n    return false;\n  }\n\n  CBS pake_msg;\n  uint16_t named_pake;\n  if (!CBS_get_u16(contents, &named_pake) ||\n      !CBS_get_u16_length_prefixed(contents, &pake_msg) ||\n      CBS_len(contents) != 0 ||  //\n      named_pake != SSL_PAKE_SPAKE2PLUSV1) {\n    OPENSSL_PUT_ERROR(SSL, SSL_R_DECODE_ERROR);\n    return false;\n  }\n\n  // Check that the server's PAKE share consists of the right number of\n  // bytes for a PAKE share and a key confirmation message.\n  if (CBS_len(&pake_msg) != spake2plus::kShareSize + spake2plus::kConfirmSize) {\n    OPENSSL_PUT_ERROR(SSL, SSL_R_DECODE_ERROR);\n    *out_alert = SSL_AD_ILLEGAL_PARAMETER;\n    return false;\n  }\n  Span<const uint8_t> pake_msg_span = pake_msg;\n\n  // Releasing the result of |ComputeConfirmation| lets the client confirm one\n  // PAKE guess. If all failures are used up, no more guesses are allowed.\n  if (!hs->credential->HasPAKEAttempts()) {\n    OPENSSL_PUT_ERROR(SSL, SSL_R_PAKE_EXHAUSTED);\n    *out_alert = SSL_AD_INTERNAL_ERROR;\n    return false;\n  }\n\n  uint8_t prover_confirm[spake2plus::kConfirmSize];\n  uint8_t prover_secret[spake2plus::kSecretSize];\n  if (!hs->pake_prover->ComputeConfirmation(\n          prover_confirm, prover_secret,\n          pake_msg_span.subspan(0, spake2plus::kShareSize),\n          pake_msg_span.subspan(spake2plus::kShareSize))) {\n    // Record a failure before releasing the answer to the client.\n    hs->credential->ClaimPAKEAttempt();\n    OPENSSL_PUT_ERROR(SSL, SSL_R_DECODE_ERROR);\n    *out_alert = SSL_AD_ILLEGAL_PARAMETER;\n    return false;\n  }\n\n  Array<uint8_t> secret;\n  if (!secret.CopyFrom(prover_secret)) {\n    OPENSSL_PUT_ERROR(SSL, ERR_R_INTERNAL_ERROR);\n    *out_alert = SSL_AD_INTERNAL_ERROR;\n    return false;\n  }\n\n  *out_secret = std::move(secret);\n  return true;\n}"
+}
