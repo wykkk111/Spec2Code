@@ -1,0 +1,4 @@
+openai>=1.0
+# Optional but recommended: required for clang-based dependency extraction
+clang
+

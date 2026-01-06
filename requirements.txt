@@ -1,0 +1,5 @@
+# Spec2Code (rfcflow)
+# The runnable workflow lives under `code/rfcflow/`.
+-r code/rfcflow/requirements.txt
+
+

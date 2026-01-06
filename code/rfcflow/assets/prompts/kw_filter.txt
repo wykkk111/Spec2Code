@@ -1,0 +1,201 @@
+Design a prompt to determine if a code function implements or handles the relevant fields, encoding formats, or methods related to the HTTP protocol. If so, identify and list all the relevant keywords based on provided keywords data.
+
+### Details
+
+Use the following keywords list in your analysis of the code function:
+
+{"keywords": {
+    "status_code": {
+      "100": "Continue",
+      "101": "Switching Protocols",
+      "1xx": "Informational",
+      "200": "OK",
+      "201": "Created",
+      "202": "Accepted",
+      "203": "Non-Authoritative Information",
+      "204": "No Content",
+      "205": "Reset Content",
+      "206": "Partial Content",
+      "2xx": "Successful",
+      "300": "Multiple Choices",
+      "301": "Moved Permanently",
+      "302": "Found",
+      "303": "See Other",
+      "304": "Not Modified",
+      "305": "Use Proxy",
+      "306": "(Unused)",
+      "307": "Temporary Redirect",
+      "308": "Permanent Redirect",
+      "3xx": "Redirection",
+      "400": "Bad Request",
+      "401": "Unauthorized",
+      "402": "Payment Required",
+      "403": "Forbidden",
+      "404": "Not Found",
+      "405": "Method Not Allowed",
+      "406": "Not Acceptable",
+      "407": "Proxy Authentication Required",
+      "408": "Request Timeout",
+      "409": "Conflict",
+      "410": "Gone",
+      "411": "Length Required",
+      "412": "Precondition Failed",
+      "413": "Content Too Large",
+      "414": "URI Too Long",
+      "415": "Unsupported Media Type",
+      "416": "Range Not Satisfiable",
+      "417": "Expectation Failed",
+      "418": "(Unused)",
+      "421": "Misdirected Request",
+      "422": "Unprocessable Content",
+      "426": "Upgrade Required",
+      "428": "Precondition Required",
+      "4xx": "Client Error",
+      "500": "Internal Server Error",
+      "501": "Not Implemented",
+      "502": "Bad Gateway",
+      "503": "Service Unavailable",
+      "504": "Gateway Timeout",
+      "505": "HTTP Version Not Supported",
+      "511": "Network Authentication Required",
+      "5xx": "Server Error"
+    },
+    "field_name": [
+      "Accept",
+      "Accept-Charset", 
+      "Accept-Encoding",
+      "Accept-Language",
+      "Accept-Ranges",
+      "Allow",
+      "Authentication-Info",
+      "Authorization",
+      "Connection",
+      "Content-Encoding",
+      "Content-Language",
+      "Content-Length",
+      "Content-Location",
+      "Content-Range", 
+      "Content-Type",
+      "Close",
+      "\"close\"",
+      "Date",
+      "ETag",
+      "Expect",
+      "From",
+      "Host",
+      "If-Match",
+      "If-Modified-Since",
+      "If-None-Match",
+      "If-Range",
+      "If-Unmodified-Since",
+      "Last-Modified",
+      "Location",
+      "Max-Forwards",
+      "MIME-Version",
+      "Proxy-Authenticate",
+      "Proxy-Authentication-Info",
+      "Proxy-Authorization",
+      "Range",
+      "Referer",
+      "Retry-After",
+      "Server",
+      "TE",
+      "Transfer-Encoding",
+      "Trailer",
+      "trailer",
+      "Upgrade",
+      "User-Agent",
+      "Vary",
+      "Via",
+      "WWW-Authenticate",
+      "100-continue"
+    ],
+    "content_coding": [
+      "compress",
+      "deflate", 
+      "gzip",
+      "chunked",
+      "identity",
+      "x-compress",
+      "x-gzip"
+    ],
+    "method": [
+      "GET",
+      "HEAD",
+      "POST",
+      "PUT",
+      "DELETE",
+      "CONNECT",
+      "OPTIONS",
+      "TRACE"
+    ],
+    "syntax": [
+      "CR",
+      "LF",
+      "CRLF",
+      "CTL",
+      "SP",
+      "HT",
+      "DIGIT",
+      "ALPHA",
+      "DQUOTE",
+      "HEXDIG",
+      "OCTET",
+      "VCHAR",
+      "HTP"
+    ]
+
+  }
+}
+
+
+
+### Steps
+
+1. **Identify Functionality**: Review the given code function to extract any HTTP-related features or keywords.
+2. **Match Keywords**: Compare extracted features against the provided lists of HTTP status codes, field names, content codings, and methods.
+3. **Compile Results**: Create a list of matched keywords found in the function.
+
+### Note
+- As for keywords in status code, number and text both can be used as keywords for matching". For example, "200" and "OK" are both valid keywords for the status code "200". But if it matched based on text, transfer to status code only (eg., use "200" replace "OK")
+- The output keywords must be from the provided keywords data(keywords list). Can not use other keywords.
+
+### Output Format
+
+- Provide your findings in a JSON format that includes the identified keywords under the following categories:
+  - `status_code`
+  - `field_name`
+  - `content_coding`
+  - `method`
+  - `syntax`
+ 
+Each category should only include the keywords that are matched in the code function.
+
+```json
+{
+  "status_code": [],
+  "field_name": [],
+  "content_coding": [],
+  "method": [],
+  "syntax": []
+}
+```
+If no keywords are matched, the corresponding list should be empty.
+
+### Examples
+
+**Input**: A code function snippet might handle HTTP methods and headers, such as `GET` and `Content-Type`.
+
+**Output Example**:
+```json
+{
+  "status_code": [],
+  "field_name": ["Content-Type"],
+  "content_coding": [],
+  "method": ["GET"],
+  "syntax": []
+}
+```
+
+
+

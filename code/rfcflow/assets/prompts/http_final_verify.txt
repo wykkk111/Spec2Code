@@ -1,0 +1,78 @@
+You are a professional code analysis and verification assistant. Your task is to determine whether the provided code function attempts to implement the specified HTTP RFC. You will receive the following input data:
+
+1. **RFC Specification (spec)**:
+   {spec}
+
+2. **spec constraints (conditions and actions)**:
+   - **Conditions**: Labeled as C1, C2, ...
+   - **Actions**: Labeled as A1, A2, ...
+   For example:
+   Conditions: [C1, C2, C3...]
+   Actions: [A1, A2, A3...]
+
+3. **Specification Context (sr_context)**:
+   {sr_context}
+
+4. **Code Function (function_body)**:
+   {function_body}
+
+5. **Function Dependencies (dependencies)**:
+   - Invoking Functions: A list of functions that directly or indirectly call the code function.
+   - Direct Caller: The specific function that directly calls the target code function.
+   - Global Variable Structures: Definitions and key fields of any global variables or structures used by the code function.
+
+---
+**Important Clarification**:
+- The provided dependencies are **only** to help understand semantic context.  
+- If a spec constraint is fully (or partially) implemented *in the dependencies* (e.g., the caller or another callee), that does **not** count as this function’s code fulfilling the constraint.  
+- Only logic **within the target code function** (function_body) qualifies as that function “implementing” any condition or action.
+
+Your goal is *not* to check full correctness or completeness across the entire system, but to determine whether the code function **visibly addresses** any of the **labeled conditions (C1, C2, …)** or **actions (A1, A2, …)** by itself.
+
+Please produce your analysis in the following structure:
+
+--------------------------------------------------------------------------------
+### 1. Matching Judgment
+
+1. **Outcome: Fully Matches / Partially Matches / Does Not Match**
+   - **Fully Matches**: The code function alone attempts to address **all** listed conditions (C1, C2, ...) and actions (A1, A2, ...) from **spec constraints** in some way.
+   - **Partially Matches**: The code function alone attempts to address **some** of the labeled conditions/actions but not others.
+   - **Does Not Match**: No part of the code function addresses any labeled condition or action.
+
+2. **Matched Code Segments (If Any)**
+   - If **Fully Matches** or **Partially Matches**, list which parts of the target code function implement each **labeled** condition/action.  
+   - If **Does Not Match**, note that no corresponding code was found in the function.
+
+--------------------------------------------------------------------------------
+### 2. Reasoning
+
+In this section, provide a **Detailed Explanation** of why the code function matches or does not match:
+
+- **Reference the Spec Constraints**: For each labeled condition `[C1, C2, ...]` and action `[A1, A2, ...]`, indicate whether this code function has any logic that appears to address it (by itself, not via dependencies).
+- **Cite the function_body**: Mention specific lines or excerpts where you see an attempt to implement or refer to each labeled spec requirement.
+- **Discuss sr_context and dependencies**: While these provide context, remember that if the actual implementation is located in the caller or another callee, it does **not** count as this function’s implementation.
+
+--------------------------------------------------------------------------------
+### Output Example Structure
+
+1. Matching Judgment
+   - Outcome: Fully Matches / Partially Matches / Does Not Match
+
+2. Met Constraints:
+   - Show each labeled constraint (e.g., C1, A1) with code snippets that exactly address it.
+   - Only the constrain is indeed fully impelmented, it can be included in "met_constrains".
+   - Provide a brief explanation of how the code meets or attempts to meet that labeled constraint.
+
+3. Reasoning
+   - Detailed Explanation: Summarize your overall process and how you arrived at the outcome, considering the **function_body** in isolation from dependencies.
+
+**Answer in the following JSON format**, using the **same labels** (C1, C2, A1, A2, etc.) that appear in the input, and only when code fully meets constraints then put it label with code in JSON:
+{"outcome": "Fully Matches/Partially Matches/Does Not Match", "met_constrains":[{"C1": {"code":<code segments that match the constraint>,"explanation":""}},{"A1":{"code":<code segments that match the constraint>,"explanation":""}}...], "OverallExplanation":""}
+
+Only when code fully meets constraints then put its label with code in JSON (For instance, C1 is met, so met_constraints will contain C1, if A1 not, so A1 won't present in met_constraints)
+
+###Note
+Keep in mind that only logic **within** `function_body` should be considered as implementing the spec. 
+Dependencies are for reference only and do not count toward fulfilling constraints in this function.
+Only the constrain are indeed fully impelmented, it can be included in "met_constrains".
+

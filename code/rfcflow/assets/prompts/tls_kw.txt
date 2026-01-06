@@ -1,0 +1,141 @@
+Given a code snippet, determine if it implements or handles functionalities related to TLS. If so, identify and list all the relevant keywords found in the code, based on the TLS keywords data below.
+
+
+### Details
+
+Use the following keywords list in your analysis of the code function:
+
+{
+  "ProtocolCoreVersion": {
+    "keywords": [
+      "TLS 1.3",
+      "TLS 1.2",
+      "legacy_version",
+      "protocol_version",
+      "supported_versions",
+      "record_overflow",
+      "extension"
+    ]
+  },
+  "HandshakeFlow": {
+    "keywords": [
+      "ClientHello",
+      "ServerHello",
+      "HelloRetryRequest",
+      "EncryptedExtensions",
+      "Finished",
+      "unexpected_message",
+      "handshake_failure",
+      "ChangeCipherSpec"
+    ]
+  },
+  "KeyExchangeSecurity": {
+    "keywords": [
+      "supported_groups",
+      "key_share",
+      "(EC)DHE",
+      "illegal_parameter",
+      "PSK",
+      "pre_shared_key",
+      "psk_key_exchange_modes",
+      "psk_ke",
+      "psk_dhe_ke",
+      "NewSessionTicket",
+      "cookie"
+    ]
+  },
+  "AuthenticationCertificates": {
+    "keywords": [
+      "Certificate",
+      "CertificateRequest",
+      "CertificateVerify",
+      "certificate_authorities",
+      "status_request",
+      "server_name",
+      "signature_algorithms",
+      "signature_algorithms_cert",
+      "unsupported_certificate"
+    ]
+  },
+  "DataTransferRecordLayer": {
+    "keywords": [
+      "TLSPlaintext",
+      "TLSCiphertext",
+      "AEAD",
+      "sequence number",
+      "KeyUpdate",
+      "update_requested",
+      "update_not_requested",
+      "early_data",
+      "0-RTT",
+      "EndOfEarlyData",
+      "bad_record_mac"
+    ]
+  },
+  "SessionManagementAlerts": {
+    "keywords": [
+      "ticket_lifetime",
+      "selected_identity",
+      "obfuscated_ticket_age",
+      "post_handshake_auth",
+      "missing_extension",
+      "close_notify",
+      "decode_error",
+      "decrypt_error",
+      "fatal alert"
+    ]
+  }
+}
+
+
+
+###Steps
+1. Identify Functionality
+Inspect the provided code snippet to see if there is any TLS-related logic, such as references to TLS protocol versions, handshake flow, key exchanges, certificate processing, record-layer operations, or session management.
+
+2. Match Keywords
+-Refer to each category (e.g., ProtocolCoreVersion, HandshakeFlow, KeyExchangeSecurity, etc.) and compare the code snippet against the listed keywords.
+-Extract occurrences of these keywords if they appear in the code.
+-Aim for exact matches or clearly corresponding terms (case sensitivity may be decided based on specific needs).
+
+3. Compile Results
+-For each category, list all matching keywords found in the code snippet.
+-Output should have each category as a key with an array of matched keywords. If no keywords match a category, leave the array empty.
+
+### Output Format
+ 
+Provide your findings in JSON format. Example structure:
+{
+  "ProtocolCoreVersion": [],
+  "HandshakeFlow": [],
+  "KeyExchangeSecurity": [],
+  "AuthenticationCertificates": [],
+  "DataTransferRecordLayer": [],
+  "SessionManagementAlerts": []
+}
+
+-For categories where no keywords are matched, keep the array empty.
+-Only include keywords from the provided TLS keywords data (no extra or unlisted keywords).
+
+### Example
+-Input (example code snippet mentioning TLS 1.3, handshake flow steps):
+function tlsHandshake() {
+  // Use TLS 1.3 for the handshake
+  // ...
+  // The client sends ClientHello and then waits for ServerHello
+  // ...
+  // If we receive an unexpected_message, we respond with handshake_failure
+}
+
+Output:
+{
+  "ProtocolCoreVersion": ["TLS 1.3"],
+  "HandshakeFlow": ["ClientHello", "ServerHello", "unexpected_message", "handshake_failure"],
+  "KeyExchangeSecurity": [],
+  "AuthenticationCertificates": [],
+  "DataTransferRecordLayer": [],
+  "SessionManagementAlerts": []
+}
+
+
+

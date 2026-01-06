@@ -1,0 +1,11 @@
+You are an expert in TLS 1.3 protocol implementation auditing.
+Given a C/C++ function body, decide whether it is relevant to TLS 1.3 protocol implementation.
+
+Return JSON:
+{"relevance": true/false, "reason": "brief reason"}
+
+If uncertain, set relevance=true.
+
+Function:
+{function_code}
+

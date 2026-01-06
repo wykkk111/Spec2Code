@@ -1,0 +1,99 @@
+Given a piece of code, determine which TLS-related subcategories the code implements or handles. Focus on the actual behaviors of the code to identify all applicable subcategories.
+
+###Context
+
+We have six top-level categories (A–F) for TLS-related functionalities, each with multiple subcategories:
+
+A. Handshake Processing  
+A1. Protocol Version and Algorithm Negotiation  
+Description: Handles selecting or enforcing the TLS protocol version and cipher suite negotiation.  
+A2. Hello Message Legacy Fields  
+Description: Manages the older/legacy fields in ClientHello and ServerHello messages, such as deprecated compression methods or random bytes.  
+A3. Handshake Procedure and Extensions  
+Description: Ensures correct sequencing of handshake messages (ClientHello, ServerHello, etc.) and processes TLS extensions during the handshake.  
+A4. Handshake Protocol Invariants and Compatibility Mode  
+Description: Covers consistency checks, middlebox compatibility behaviors, and handling quirks for older TLS versions.  
+A5. Key Share Negotiation  
+Description: Deals with key share extension logic, selecting or validating the key exchange groups (e.g., ECDHE).  
+A6. Diffie-Hellman Secret Calculation and Validation  
+Description: Performs Diffie-Hellman shared secret generation, point validation, and zero-check for ephemeral key exchanges.
+
+B. Certificate Chain Processing  
+B1. Certificate Chain Structure and Type  
+Description: Ensures the certificate list order is correct, handles raw public keys vs. X.509, and enforces the requirement of non-empty chains.  
+B2. Server Certificate Chain Signature Selection  
+Description: Validates that each certificate is signed using an allowed algorithm; includes fallback chain logic if the client’s preferences aren’t met.  
+B3. Certificate Key and Signature Parameters  
+Description: Checks public key parameters (e.g., RSA-PSS OID, salt length) and ensures signature compatibility.  
+B4. Signature Algorithm Preferences and Restrictions  
+Description: Implements support for or denial of certain algorithms (e.g., disallow MD5, rank older signature schemes last).  
+B5. Certificate Request and Filtering Extensions  
+Description: Processes server requests for client certificates, filters OIDs in certificate requests, etc.  
+B6. Client Certificate Response and Authentication  
+Description: Enforces how a client responds to multiple CertificateRequests, ensures correct message sequencing for client authentication.  
+B7. Certificate Validation and Usage Policies  
+Description: Establishes chain validation rules, handling trusted CAs, expiration checks, key size policies, etc.
+
+C. Alert Mechanism  
+C1. Alert Sending and Logging  
+Description: Determines when to send fatal or closure alerts, logs alert types, and fosters correct alert-level usage.  
+C2. Alert Handling and Connection Termination  
+Description: Receives/consumes alerts, terminates connections properly, discards session keys upon error.
+
+D. Data Encryption (Record Protocol)  
+D1. Record Layer Message Handling  
+Description: Splits or coalesces handshake/application data into records, respects the no-interleaving requirement, handles zero-length fragments.  
+D2. Record Protocol Version and Legacy Handling  
+Description: Manages deprecated record-layer version fields, enforces ignoring or rejecting older SSL versions.  
+D3. Record Payload Size Limits and Key Updates  
+Description: Ensures records do not exceed size limits, pads or updates keys appropriately, and triggers rekey at certain thresholds.
+
+E. Session Resumption and Early Data  
+E1. PSK Handshake and Key Exchange Modes  
+Description: Associates external or ticket-based PSKs with cipher suite selection, ensures correct handshake flow for resumption.  
+E2. Session Ticket Usage and Restrictions  
+Description: Issues, stores, and retrieves session tickets, enforcing server-set lifetimes and correct SNI usage.  
+E3. Session Ticket Renewal and Resumption Version  
+Description: Implements how new tickets are provided, manages multiple connections/tickets, and ensures correct version reuse.  
+E4. Early Data and Replay Prevention  
+Description: Handles 0-RTT data, decides replays vs. partial acceptance or rejection, and ensures safe usage or fallback behaviors.
+
+F. Key Schedule and Exporters  
+F1. Secret Derivation and Erasure  
+Description: Executes HKDF expansions for master secrets, application traffic secrets, and promptly erases old secrets.  
+F2. TLS Exporter Usage  
+Description: Controls how exporters are computed (e.g., from exporter_master_secret) and ensures correct context usage or label uniqueness.
+
+###Instructions
+
+1. Analyze the Code  
+Read through the code snippet carefully, looking for any functionality that processes, generates, or validates TLS handshake messages, certificate chains, alerts, record-layer data, session resumption flows, or key scheduling.
+
+2. Assign Categories  
+Map each observed behavior in the code to one or more subcategories (e.g., A1, B5, D2) based on the subcategory descriptions above.
+
+3. Multiple Subcategories  
+If the code covers multiple concerns (e.g., it handles both the certificate chain validation logic and the handshake message ordering), include all applicable subcategories.
+
+4. No Match  
+If the code does not match any subcategory, return an empty array to indicate no coverage of TLS functionalities from this list.
+
+###Output Format
+
+Return the matched subcategories in the following JSON format:  
+{
+  "matched_subcategories": ["A1", "C2", "D1", "F2"]
+}
+
+If no subcategories apply to the given code, return:  
+{
+  "matched_subcategories": []
+}
+
+###Note:  
+- Focus on real, implemented behaviors in the code (e.g., checking handshake versions, verifying certificate signature algorithms, handling alerts).  
+- Carefully compare each subcategory’s description to the code logic to find a match.  
+- The results should only list subcategories (e.g., "A2", "B6") without referencing top-level letters alone.
+
+
+

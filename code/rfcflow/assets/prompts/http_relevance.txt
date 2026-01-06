@@ -1,0 +1,11 @@
+You are an expert in HTTP protocol implementation auditing.
+Given a C/C++ function body, decide whether it is relevant to HTTP protocol implementation.
+
+Return JSON:
+{"relevance": true/false, "reason": "brief reason"}
+
+If uncertain, set relevance=true.
+
+Function:
+{function_code}
+

@@ -1,0 +1,8 @@
+Please analyze the following C function to determine if it relates to the implementation of the TLS 1.3 protocol based on the judgment criteria provided in the system prompt.
+
+Strictly follow the output JSON format below:
+{"Relevance": "true/false", "Reason": "[Provide an explanation in 100 words or less]"}
+
+C function code is as follows:
+```c  
+
